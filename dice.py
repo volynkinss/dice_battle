@@ -27,7 +27,7 @@ cursor.execute('''
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         player_id INTEGER,
         player_name STRING,
-        dice_values INTEGER,
+        dice_value LIST,
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
 ''')
@@ -46,9 +46,11 @@ class GameState(types.InlineKeyboardMarkup):
 async def cmd_start(message: types.Message):
     await message.reply("Welcome to the dice game! Use the /play command to start the game.")
 
+    
+
 @dp.message_handler(Command("play"))
 async def cmd_play(message: types.Message):
-    await message.reply("Let's play the dice game! Click the 'Roll Dice' button to roll the dice three times.",
+    await message.reply("Let's play the dice game! Click the 'Roll Dice' button to roll the dice.",
                         reply_markup=GameState())
 
 # Callback query handler
@@ -60,27 +62,27 @@ async def roll_dice_callback(callback_query: types.CallbackQuery, state: FSMCont
     user_id = callback_query.from_user.id
     user_name = callback_query.from_user.username or callback_query.from_user.first_name
 
-    # Roll the dice three times
-    dice_values = [random.randint(1, 6) for _ in range(3)]
+    # Roll the dice
+    dice_value = random.randint(1, 6)
 
-    # Calculate the sum of the dice values
-    dice_sum = sum(dice_values)
 
     # Update the message with the dice result
-    await bot.edit_message_text(f"You rolled {dice_values}, and the sum is {dice_sum}!",
+    await bot.edit_message_text(f"You rolled {dice_value}!",
                                 callback_query.message.chat.id,
                                 callback_query.message.message_id)
 
     # Save the game result to the database
     cursor.execute('''
-        INSERT INTO games (player_id, player_name, dice_values) VALUES (?, ?, ?)
-    ''', (user_id, user_name, dice_values))
+        INSERT INTO games (player_id, player_name, dice_value)
+    ''', (user_id, user_name, dice_value)
+    )
     conn.commit()
 
     # Reset the game state
     await state.reset_state()
 
     # TODO: Implement game logic (e.g., track scores, determine the winner, etc.)
+    
 
 # Run the bot
 if __name__ == '__main__':
