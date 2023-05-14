@@ -3,15 +3,16 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils import executor
 import random
 import logging
 import sqlite3
+from token_for_bot import bot_token
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
 # Initialize bot and dispatcher
-bot_token = 'YOUR_BOT_TOKEN'
 bot = Bot(token=bot_token)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
@@ -52,7 +53,7 @@ async def cmd_play(message: types.Message):
                         reply_markup=GameState())
 
 # Callback query handler
-@dp.callback_query_handler(func=lambda c: c.data == GameState.ROLL_DICE)
+@dp.callback_query_handler(lambda c: c.data == GameState.ROLL_DICE)
 async def roll_dice_callback(callback_query: types.CallbackQuery, state: FSMContext):
     await bot.answer_callback_query(callback_query.id)
 
@@ -82,7 +83,7 @@ async def roll_dice_callback(callback_query: types.CallbackQuery, state: FSMCont
 # Run the bot
 if __name__ == '__main__':
     try:
-        dp.run_polling()
+        executor.start_polling(dp)
     finally:
         # Close the bot and database connection
         bot.close()
