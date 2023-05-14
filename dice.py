@@ -73,7 +73,7 @@ async def roll_dice_callback(callback_query: types.CallbackQuery, state: FSMCont
 
     # Save the game result to the database
     cursor.execute('''
-        INSERT INTO games (player_id, player_name, dice_value)
+        INSERT INTO games (player_id, player_name, dice_value) VALUES (? , ? , ?)
     ''', (user_id, user_name, dice_value)
     )
     conn.commit()
