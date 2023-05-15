@@ -2,6 +2,9 @@
 import sqlite3
 
 class SQLiteDB:
+
+    games_table = "games"
+
     def __init__(self, db_name):
         self.db_name = db_name
         self.connection = None
@@ -54,7 +57,7 @@ class SQLiteDB:
             print(f"Error inserting data: {e}")
     
     def init_game_table(self):
-        self.create_table("games",
+        self.create_table(self.games_table,
                           '''
                           id INTEGER PRIMARY KEY AUTOINCREMENT,
                           player_id INTEGER,
@@ -62,3 +65,6 @@ class SQLiteDB:
                           dice_value LIST,
                           timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                           ''')
+    
+    def insert_game_result(self, values):
+        self.insert_data(self.games_table, values)

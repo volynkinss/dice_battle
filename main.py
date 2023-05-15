@@ -54,7 +54,7 @@ async def roll_dice_callback(callback_query: types.CallbackQuery, state: FSMCont
                                 callback_query.message.message_id)
 
     # Save the game result to the database
-    db.insert_data("games", (user_id, user_name, dice_value))
+    db.insert_game_result(user_id, user_name, dice_value)
 
     # Reset the game state
     await state.reset_state()
