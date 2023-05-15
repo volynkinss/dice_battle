@@ -4,6 +4,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Command
 from aiogram.utils import executor
 import logging
+from resources.Localization import Localization
 
 from telegram import Dice
 from db.game_db import SQLiteDB
@@ -25,13 +26,13 @@ db.init_game_table()
 # Start command handler
 @dp.message_handler(Command("start"))
 async def cmd_start(message: types.Message):
-    await message.reply("Welcome to the dice game! Use the /play command to start the game.")
+    await message.reply(Localization.welcome)
 
     
 
 @dp.message_handler(Command("play"))
 async def cmd_play(message: types.Message):
-    await message.reply("Let's play the dice game! Click the 'Roll Dice' button to roll the dice.",
+    await message.reply(Localization.lets_play,
                         reply_markup=GameState())
 
 # Callback query handler
@@ -48,7 +49,7 @@ async def roll_dice_callback(callback_query: types.CallbackQuery, state: FSMCont
 
 
     # Update the message with the dice result
-    await bot.edit_message_text(f"You rolled {dice_value}!",
+    await bot.edit_message_text(Localization.rolled.format(dice_value),
                                 callback_query.message.chat.id,
                                 callback_query.message.message_id)
 
