@@ -68,3 +68,9 @@ class SQLiteDB:
     
     def insert_game_result(self, values):
         self.insert_data(self.games_table, values)
+
+    def fetch_all_data(self):
+        rows = self.fetch_data(f"SELECT * FROM {self.games_table}")
+        for row in rows:
+            print(row)
+        return rows
