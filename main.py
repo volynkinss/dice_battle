@@ -4,6 +4,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Command
 from aiogram.utils import executor
 import logging
+from gameplay.dice import DiceGame
 from resources.Localization import Localization
 
 from telegram import Dice
@@ -45,7 +46,7 @@ async def roll_dice_callback(callback_query: types.CallbackQuery, state: FSMCont
     user_name = callback_query.from_user.username or callback_query.from_user.first_name
 
     # Roll the dice
-    dice_value = Dice.do_dice()
+    dice_value = DiceGame.do_dice()
 
 
     # Update the message with the dice result

@@ -1,5 +1,5 @@
 import random
 
-class Dice:
+class DiceGame:
     def do_dice():
        return random.randint(1, 6)
