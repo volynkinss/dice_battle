@@ -6,7 +6,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils import executor
 import random
 import logging
-import sqlite3
+from db.game_db import SQLiteDB
 from token_for_bot import bot_token
 
 # Set up logging
@@ -17,21 +17,9 @@ bot = Bot(token=bot_token)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 
-# Initialize SQLite database connection
-conn = sqlite3.connect('game.db')
-cursor = conn.cursor()
+db = SQLiteDB("game.db")
+db.init_game_table()
 
-# Create a table to store game results
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS games (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        player_id INTEGER,
-        player_name STRING,
-        dice_value LIST,
-        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-''')
-conn.commit()
 
 # Game states
 class GameState(types.InlineKeyboardMarkup):
@@ -72,11 +60,7 @@ async def roll_dice_callback(callback_query: types.CallbackQuery, state: FSMCont
                                 callback_query.message.message_id)
 
     # Save the game result to the database
-    cursor.execute('''
-        INSERT INTO games (player_id, player_name, dice_value) VALUES (? , ? , ?)
-    ''', (user_id, user_name, dice_value)
-    )
-    conn.commit()
+    db.insert_data("games", (user_id, user_name, dice_value))
 
     # Reset the game state
     await state.reset_state()
@@ -91,4 +75,4 @@ if __name__ == '__main__':
     finally:
         # Close the bot and database connection
         bot.close()
-        conn.close()
+        db.disconnect()
