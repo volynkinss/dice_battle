@@ -7,7 +7,6 @@ import logging
 from gameplay.dice import DiceGame
 from resources.Localization import Localization
 
-from telegram import Dice
 from db.game_db import SQLiteDB
 from gameplay.game_state import GameState
 from token_for_bot import bot_token
