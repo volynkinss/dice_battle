@@ -50,9 +50,9 @@ class SQLiteDB:
         except sqlite3.Error as e:
             print(f"Error creating table: {e}")
 
-    def insert_data(self, table_name, values):
+    def insert_data(self, table_name, user_id, user_name, dice_value):
         try:
-            insert_query = f"INSERT INTO {table_name} VALUES {values}"
+            insert_query = f"INSERT INTO {table_name} VALUES {user_id, user_name, dice_value}"
             self.execute_query(insert_query)
             print("Data inserted successfully")
         except sqlite3.Error as e:
@@ -83,16 +83,16 @@ class SQLiteDB:
                           player_id INTEGER NOT NULL,
                           session_id INTEGER NOT NULL,
                           result INTEGER NOT NULL,
+                          timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                           FOREIGN KEY (player_id) REFERENCES players (player_id),
-                          FOREIGN KEY (session_id) REFERENCES game_sessions (session_id))
-                          timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                          FOREIGN KEY (session_id) REFERENCES game_sessions (session_id)
                           ''')
         self.create_table(self.sessions_table,
                           '''
                           id INTEGER PRIMARY KEY AUTOINCREMENT,
                           winner_id INTEGER,
                           score INTEGER,
-                          start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                          start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                           end_time TIMESTAMP
                           ''')
         self.create_table(self.players_table,
@@ -103,8 +103,8 @@ class SQLiteDB:
                           timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                           ''')
     
-    def insert_game_result(self, values):
-        self.insert_data(self.games_table, values)
+    def insert_game_result(self, user_id, user_name, dice_value):
+        self.insert_data(self.games_table, user_id, user_name, dice_value)
 
     def fetch_all_data(self):
         rows = self.fetch_data(f"SELECT * FROM {self.games_table}")
