@@ -70,3 +70,25 @@ if __name__ == '__main__':
         # Close the bot and database connection
         bot.close()
         db.disconnect()
+
+
+### game step by step:
+#player 1 starting new game
+#session is added in state "started"
+#player 2 starting new game
+#check if any started sessions available
+#create game, reference players and session
+#session state changed to "ongoing"
+#player 1 asked to do a turn /dice //save
+#player 2 asked to do a turn /dice //save
+#save turn result 
+#player 1 asked to do a turn /dice //save
+#player 2 asked to do a turn /dice //save
+#save turn result
+#player 1 asked to do a turn /dice //save
+#player 2 asked to do a turn /dice //save
+#save turn result
+#determine winner by sum of 3 dice of each player
+#save total dice result for each player
+#session to state "finished"
+#game winner and score update
