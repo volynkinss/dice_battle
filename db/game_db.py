@@ -62,7 +62,7 @@ class SQLiteDB:
                           id INTEGER PRIMARY KEY AUTOINCREMENT,
                           player_id INTEGER,
                           player_name STRING,
-                          dice_value LIST,
+                          dice_value INTEGER,
                           timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                           ''')
     
