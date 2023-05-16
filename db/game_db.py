@@ -4,6 +4,8 @@ import sqlite3
 class SQLiteDB:
 
     games_table = "games"
+    sessions_table = "sessions"
+    players_table = "players"
 
     def __init__(self, db_name):
         self.db_name = db_name
@@ -54,15 +56,50 @@ class SQLiteDB:
             self.execute_query(insert_query)
             print("Data inserted successfully")
         except sqlite3.Error as e:
+            print(f"Error inserting data: {e}") 
+            
+    def update_game(self):
+        try:
+            print("TODO UPDATE GAME")
+        except sqlite3.Error as e:
             print(f"Error inserting data: {e}")
     
+    def update_session(self):
+        try:
+            print("TODO UPDATE SESSION")
+        except sqlite3.Error as e:
+            print(f"Error inserting data: {e}")
+
+    def update_player(self):
+        try:
+            print("UPDATE PLAYERS DATA")
+        except sqlite3.Error as e:
+            print(f"Error inserting data: {e}")
+
     def init_game_table(self):
         self.create_table(self.games_table,
                           '''
                           id INTEGER PRIMARY KEY AUTOINCREMENT,
-                          player_id INTEGER,
+                          player_id INTEGER NOT NULL,
+                          session_id INTEGER NOT NULL,
+                          result INTEGER NOT NULL,
+                          FOREIGN KEY (player_id) REFERENCES players (player_id),
+                          FOREIGN KEY (session_id) REFERENCES game_sessions (session_id))
+                          timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                          ''')
+        self.create_table(self.sessions_table,
+                          '''
+                          id INTEGER PRIMARY KEY AUTOINCREMENT,
+                          winner_id INTEGER,
+                          score INTEGER,
+                          start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                          end_time TIMESTAMP
+                          ''')
+        self.create_table(self.players_table,
+                          '''
+                          id INTEGER PRIMARY KEY AUTOINCREMENT,
+                          player_id INTEGER NOT NULL,
                           player_name STRING,
-                          dice_value INTEGER,
                           timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                           ''')
     
