@@ -1,5 +1,9 @@
 # Initialize SQLite database connection
 import sqlite3
+import logging
+
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s [%(levelname)s]: %(message)s')
 
 class SQLiteDB:
 
@@ -16,22 +20,22 @@ class SQLiteDB:
         try:
             self.connection = sqlite3.connect(self.db_name)
             self.cursor = self.connection.cursor()
-            print(f"Connected to SQLite database: {self.db_name}")
+            logging.info(f"Connected to SQLite database: {self.db_name}")
         except sqlite3.Error as e:
-            print(f"Error connecting to SQLite database: {e}")
+            logging.info(f"Error connecting to SQLite database: {e}")
 
     def disconnect(self):
         if self.connection:
             self.connection.close()
-            print(f"Disconnected from SQLite database: {self.db_name}")
+            logging.info(f"Disconnected from SQLite database: {self.db_name}")
 
     def execute_query(self, query):
         try:
             self.cursor.execute(query)
             self.connection.commit()
-            print("Query executed successfully")
+            logging.info("Query executed successfully")
         except sqlite3.Error as e:
-            print(f"Error executing query: {e}")
+            logging.info(f"Error executing query: {e}")
 
     def fetch_data(self, query):
         try:
@@ -39,42 +43,42 @@ class SQLiteDB:
             rows = self.cursor.fetchall()
             return rows
         except sqlite3.Error as e:
-            print(f"Error fetching data: {e}")
+            logging.info(f"Error fetching data: {e}")
             return []
 
     def create_table(self, table_name, columns):
         try:
             create_query = f"CREATE TABLE IF NOT EXISTS {table_name} ({columns})"
             self.execute_query(create_query)
-            print(f"Table '{table_name}' created successfully")
+            logging.info(f"Table '{table_name}' created successfully")
         except sqlite3.Error as e:
-            print(f"Error creating table: {e}")
+            logging.info(f"Error creating table: {e}")
 
     def create_player(self, user_id, user_name):
         try:
             insert_query = f"INSERT INTO {self.players_table} VALUES {user_id, user_name}"
             self.execute_query(insert_query)
-            print("Data inserted successfully")
+            logging.info("Data inserted successfully")
         except sqlite3.Error as e:
-            print(f"Error inserting data: {e}") 
+            logging.info(f"Error inserting data: {e}") 
 
     def create_session(self):
         try:
             insert_query = f"INSERT INTO {self.sessions_table} VALUES {0, 0}"
             self.execute_query(insert_query)
-            print("Data inserted successfully")
+            logging.info("Data inserted successfully")
             return self.get_last_session_id()
         except sqlite3.Error as e:
-            print(f"Error inserting data: {e}") 
+            logging.info(f"Error inserting data: {e}") 
 
 
     def create_game(self, player_id, session_id):
         try:
             insert_query = f"INSERT INTO {self.games_table} VALUES {player_id, session_id, 0}"
             self.execute_query(insert_query)
-            print("Data inserted successfully")
+            logging.info("Data inserted successfully")
         except sqlite3.Error as e:
-            print(f"Error inserting data: {e}")
+            logging.info(f"Error inserting data: {e}")
 
 
     def get_last_session_id(self):
@@ -82,35 +86,35 @@ class SQLiteDB:
             insert_query = f"SELECT id FROM {self.sessions_table} ORDER BY id DESC LIMIT 1"
             return self.execute_query(insert_query)            
         except sqlite3.Error as e:
-            print(f"Error inserting data: {e}") 
+            logging.info(f"Error inserting data: {e}") 
 
             
     def update_game(self):
         try:
-            print("TODO UPDATE GAME")
+            logging.info("TODO UPDATE GAME")
         except sqlite3.Error as e:
-            print(f"Error inserting data: {e}")
+            logging.info(f"Error inserting data: {e}")
     
     def update_session(self):
         try:
-            print("TODO UPDATE SESSION")
+            logging.info("TODO UPDATE SESSION")
         except sqlite3.Error as e:
-            print(f"Error inserting data: {e}")
+            logging.info(f"Error inserting data: {e}")
 
     def update_player(self):
         try:
-            print("UPDATE PLAYERS DATA")
+            logging.info("UPDATE PLAYERS DATA")
         except sqlite3.Error as e:
-            print(f"Error inserting data: {e}")
+            logging.info(f"Error inserting data: {e}")
 
     def drop_table(self, table_name):
         try:
             query = f"DROP TABLE IF EXISTS {table_name}"
             self.cursor.execute(query)
             self.connection.commit()
-            print(f"Table {table_name} has been dropped successfully.")
+            logging.info(f"Table {table_name} has been dropped successfully.")
         except Exception as e:
-            print(f"An error occurred: {e}")
+            logging.info(f"An error occurred: {e}")
 
     def init_game_table(self):
         #drop
@@ -152,5 +156,5 @@ class SQLiteDB:
     def fetch_all_data(self):
         rows = self.fetch_data(f"SELECT * FROM {self.games_table}")
         for row in rows:
-            print(row)
+            logging.info(row)
         return rows
