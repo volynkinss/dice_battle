@@ -76,17 +76,21 @@ class SQLiteDB:
         except sqlite3.Error as e:
             print(f"Error inserting data: {e}")
 
+    def drop_table(self, table_name):
+        try:
+            query = f"DROP TABLE IF EXISTS {table_name}"
+            self.cursor.execute(query)
+            self.connection.commit()
+            print(f"Table {table_name} has been dropped successfully.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
     def init_game_table(self):
-        self.create_table(self.games_table,
-                          '''
-                          id INTEGER PRIMARY KEY AUTOINCREMENT,
-                          player_id INTEGER NOT NULL,
-                          session_id INTEGER NOT NULL,
-                          result INTEGER NOT NULL,
-                          timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                          FOREIGN KEY (player_id) REFERENCES players (player_id),
-                          FOREIGN KEY (session_id) REFERENCES game_sessions (session_id)
-                          ''')
+        #drop
+        self.drop_table(self.games_table)
+        self.drop_table(self.sessions_table)
+        self.drop_table(self.players_table)
+        #init
         self.create_table(self.sessions_table,
                           '''
                           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -102,6 +106,18 @@ class SQLiteDB:
                           player_name STRING,
                           timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                           ''')
+        
+        self.create_table(self.games_table,
+                          '''
+                          id INTEGER PRIMARY KEY AUTOINCREMENT,
+                          player_id INTEGER NOT NULL,
+                          session_id INTEGER NOT NULL,
+                          result INTEGER NOT NULL,
+                          timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                          FOREIGN KEY (player_id) REFERENCES players (player_id),
+                          FOREIGN KEY (session_id) REFERENCES game_sessions (session_id)
+                          ''')
+       
     
     def insert_game_result(self, user_id, user_name, dice_value):
         self.insert_data(self.games_table, user_id, user_name, dice_value)
