@@ -6,6 +6,8 @@ from aiogram.utils import executor
 import logging
 from gameplay.dice import DiceGame
 from resources.Localization import Localization
+from aiogram.dispatcher.filters.state import State, StatesGroup
+
 
 from db.game_db import SQLiteDB
 from gameplay.game_state import GameState
@@ -38,6 +40,12 @@ async def cmd_play(message: types.Message):
     await message.reply(Localization.lets_play,
                         reply_markup=GameState())
 
+class Rolls_Dice(StatesGroup):
+    first_roll = State()
+    second_roll = State()
+    third_roll = State()
+
+
 # Callback query handler
 @dp.callback_query_handler(lambda c: c.data == GameState.ROLL_DICE)
 async def roll_dice_callback(callback_query: types.CallbackQuery, state: FSMContext):
@@ -47,14 +55,30 @@ async def roll_dice_callback(callback_query: types.CallbackQuery, state: FSMCont
     user_id = callback_query.from_user.id
     user_name = callback_query.from_user.username or callback_query.from_user.first_name
 
-    # Roll the dice
+    # first roll the dice
     dice_value = DiceGame.do_dice()
+    text = f"Result of first roll dice is {dice_value}"
+    await bot.send_message(chat_id=callback_query.message.chat.id, text=text, reply_markup=GameState())
+    await state.update_data(first = dice_value)
+    await state.set_state(Rolls_Dice.first_roll)
 
 
-    # Update the message with the dice result
-    await bot.edit_message_text(Localization.rolled.format(dice_value),
-                                callback_query.message.chat.id,
-                                callback_query.message.message_id)
+@dp.callback_query_handler(lambda c: c.data == GameState.ROLL_DICE, state=Rolls_Dice.first_roll)
+async def roll_dice_callback(callback_query: types.CallbackQuery, state: FSMContext):
+    await bot.answer_callback_query(callback_query.id)
+    dice_value = DiceGame.do_dice()
+    text = f"Result of second roll dice is {dice_value}"
+    await bot.send_message(chat_id=callback_query.message.chat.id, text=text, reply_markup=GameState())
+    await state.update_data(second = dice_value)
+    await state.set_state(Rolls_Dice.second_roll)
+    data_rolls = await state.get_data()
+    await bot.send_message(chat_id=callback_query.message.chat.id, text=data_rolls)
+
+
+    # # Update the message with the dice result
+    # await bot.edit_message_text(Localization.rolled.format(dice_value),
+    #                             callback_query.message.chat.id,
+    #                             callback_query.message.message_id)
 
     # Save the game result to the database
     db.insert_game_result(user_id, user_name, dice_value)
