@@ -50,13 +50,40 @@ class SQLiteDB:
         except sqlite3.Error as e:
             print(f"Error creating table: {e}")
 
-    def insert_data(self, table_name, user_id, user_name, dice_value):
+    def create_player(self, user_id, user_name):
         try:
-            insert_query = f"INSERT INTO {table_name} VALUES {user_id, user_name, dice_value}"
+            insert_query = f"INSERT INTO {self.players_table} VALUES {user_id, user_name}"
             self.execute_query(insert_query)
             print("Data inserted successfully")
         except sqlite3.Error as e:
             print(f"Error inserting data: {e}") 
+
+    def create_session(self):
+        try:
+            insert_query = f"INSERT INTO {self.sessions_table} VALUES {0, 0}"
+            self.execute_query(insert_query)
+            print("Data inserted successfully")
+            return self.get_last_session_id()
+        except sqlite3.Error as e:
+            print(f"Error inserting data: {e}") 
+
+
+    def create_game(self, player_id, session_id):
+        try:
+            insert_query = f"INSERT INTO {self.games_table} VALUES {player_id, session_id, 0}"
+            self.execute_query(insert_query)
+            print("Data inserted successfully")
+        except sqlite3.Error as e:
+            print(f"Error inserting data: {e}")
+
+
+    def get_last_session_id(self):
+        try:
+            insert_query = f"SELECT id FROM {self.sessions_table} ORDER BY id DESC LIMIT 1"
+            return self.execute_query(insert_query)            
+        except sqlite3.Error as e:
+            print(f"Error inserting data: {e}") 
+
             
     def update_game(self):
         try:
@@ -96,8 +123,8 @@ class SQLiteDB:
                           id INTEGER PRIMARY KEY AUTOINCREMENT,
                           winner_id INTEGER,
                           score INTEGER,
+                          end_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                           start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                          end_time TIMESTAMP
                           ''')
         self.create_table(self.players_table,
                           '''

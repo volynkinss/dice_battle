@@ -27,12 +27,14 @@ db.init_game_table()
 # Start command handler
 @dp.message_handler(Command("start"))
 async def cmd_start(message: types.Message):
+    db.create_player(message.from_user.id, message.from_user.full_name)
     await message.reply(Localization.welcome)
-
     
 
 @dp.message_handler(Command("play"))
 async def cmd_play(message: types.Message):
+    session_id = db.create_session()
+    db.create_game(message.from_user.id, session_id)
     await message.reply(Localization.lets_play,
                         reply_markup=GameState())
 
