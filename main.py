@@ -79,17 +79,14 @@ async def roll_dice_callback(callback_query: types.CallbackQuery, state: FSMCont
     await bot.answer_callback_query(callback_query.id)
     dice_value = DiceGame.do_dice()
     text = f"Result of third roll dice is {dice_value}"
-    await bot.send_message(chat_id=callback_query.message.chat.id, text=text, reply_markup=GameState())
+    await bot.send_message(chat_id=callback_query.message.chat.id, text=text)
     await state.update_data(third = dice_value)
     await state.set_state(Rolls_Dice.third_roll)
-
-@dp.callback_query_handler(lambda c: c.data == GameState.TOTAL, state = Rolls_Dice.third_roll)
-async def roll_dice_callback(callback_query: types.CallbackQuery, state: FSMContext):
-    await bot.answer_callback_query(callback_query.id)
     data_rolls = await state.get_data()
     rolls = sum(data_rolls[x] for x in data_rolls)
     text = f"The total result of the dice rolls is {rolls}"
     await bot.send_message(chat_id=callback_query.message.chat.id, text=text)
+    
 
 
     # # Update the message with the dice result
