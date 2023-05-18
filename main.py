@@ -37,6 +37,7 @@ async def cmd_start(message: types.Message):
 async def cmd_play(message: types.Message):
     session_id = db.create_session()
     db.create_game(message.from_user.id, session_id)
+    
     await message.reply(Localization.lets_play,
                         reply_markup=GameState())
 
@@ -44,6 +45,7 @@ class Rolls_Dice(StatesGroup):
     first_roll = State()
     second_roll = State()
     third_roll = State()
+    total = State()
 
 
 # Callback query handler
@@ -71,8 +73,23 @@ async def roll_dice_callback(callback_query: types.CallbackQuery, state: FSMCont
     await bot.send_message(chat_id=callback_query.message.chat.id, text=text, reply_markup=GameState())
     await state.update_data(second = dice_value)
     await state.set_state(Rolls_Dice.second_roll)
+
+@dp.callback_query_handler(lambda c: c.data == GameState.ROLL_DICE, state=Rolls_Dice.second_roll)
+async def roll_dice_callback(callback_query: types.CallbackQuery, state: FSMContext):
+    await bot.answer_callback_query(callback_query.id)
+    dice_value = DiceGame.do_dice()
+    text = f"Result of third roll dice is {dice_value}"
+    await bot.send_message(chat_id=callback_query.message.chat.id, text=text, reply_markup=GameState())
+    await state.update_data(third = dice_value)
+    await state.set_state(Rolls_Dice.third_roll)
+
+@dp.callback_query_handler(lambda c: c.data == GameState.TOTAL, state = Rolls_Dice.third_roll)
+async def roll_dice_callback(callback_query: types.CallbackQuery, state: FSMContext):
+    await bot.answer_callback_query(callback_query.id)
     data_rolls = await state.get_data()
-    await bot.send_message(chat_id=callback_query.message.chat.id, text=data_rolls)
+    rolls = sum(data_rolls[x] for x in data_rolls)
+    text = f"The total result of the dice rolls is {rolls}"
+    await bot.send_message(chat_id=callback_query.message.chat.id, text=text)
 
 
     # # Update the message with the dice result
@@ -81,7 +98,7 @@ async def roll_dice_callback(callback_query: types.CallbackQuery, state: FSMCont
     #                             callback_query.message.message_id)
 
     # Save the game result to the database
-    db.insert_game_result(user_id, user_name, dice_value)
+    # db.insert_game_result(user_id, user_name, dice_value)
 
     # Reset the game state
     await state.reset_state()
