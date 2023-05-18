@@ -57,10 +57,11 @@ async def handle_button(callback_query: types.CallbackQuery, state: FSMContext):
     # roll = random.randint(1, 6)
     num_rolls = 5
     dice_roll = await bot.send_dice(chat_id=callback_query.message.chat.id)
-    rolls.append(dice_roll)
-    result = f"Бросок {len(rolls)}: {dice_roll}\n"
+    dice_roll_value = dice_roll["dice"]["value"]
+    rolls.append(dice_roll_value)
+    result = f"Roll {len(rolls)}: {dice_roll_value}\n"
     if len(rolls) == num_rolls:
-        result += "Итоговая сумма: " + str(sum(rolls))
+        result += "Total result: " + str(sum(rolls))
         await bot.send_message(chat_id=callback_query.message.chat.id, text=result)
         await state.finish()
     else:
