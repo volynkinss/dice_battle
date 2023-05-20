@@ -37,27 +37,38 @@ async def cmd_start(message: types.Message):
 async def cmd_play(message: types.Message, state: FSMContext):
     session_id = db.create_session()
     db.create_game(message.from_user.id, session_id)
-    num_rolls = 5
-    await state.update_data(num_rolls=num_rolls)
-    data = await state.get_data()
-    num_rolls = data.get("num_rolls")
-    global rolls
-    rolls = data.get("rolls", [])
-    await message.reply(Localization.lets_play,
-                        reply_markup=GameState())
+    await message.reply(Localization.number_rolls)
     
+# class Rolls_Dice(StatesGroup):
+#     first_roll = State()
+#     second_roll = State()
+#     third_roll = State()
 
-class Rolls_Dice(StatesGroup):
-    first_roll = State()
-    second_roll = State()
-    third_roll = State()
+@dp.message_handler(content_types=types.ContentType.TEXT)
+async def handle_message(message: types.Message, state: FSMContext):
+    if message.text.isdigit():
+        num_rolls = int(message.text)
+        await state.update_data(num_rolls = num_rolls)
+        await state.update_data(rolls = [])
+        data = await state.get_data()
+        print(data)
+        print(type(data["rolls"]))
+        
+        await message.reply(Localization.lets_play, reply_markup=GameState())
+    else:
+        await bot.send_message(chat_id=message.chat.id, text = Localization.number_rolls)
+
+
 
 @dp.callback_query_handler(lambda c: c.data == GameState.ROLL_DICE)
 async def handle_button(callback_query: types.CallbackQuery, state: FSMContext):
-    # roll = random.randint(1, 6)
-    num_rolls = 5
     dice_roll = await bot.send_dice(chat_id=callback_query.message.chat.id)
     dice_roll_value = dice_roll["dice"]["value"]
+    data = await state.get_data()
+    print(data)
+    num_rolls = data["num_rolls"]
+    print(num_rolls)
+    rolls = data["rolls"]
     rolls.append(dice_roll_value)
     result = f"Roll {len(rolls)}: {dice_roll_value}\n"
     if len(rolls) == num_rolls:
@@ -65,8 +76,10 @@ async def handle_button(callback_query: types.CallbackQuery, state: FSMContext):
         await bot.send_message(chat_id=callback_query.message.chat.id, text=result)
         await state.finish()
     else:
-        await bot.send_message(chat_id=callback_query.message.chat.id, text=result, reply_markup=GameState())
+        await bot.send_message(chat_id=callback_query.message.chat.id, text=result, reply_markup=GameState()) 
         await state.update_data(rolls=rolls)
+        print(data)
+
 
 
 # Callback query handler
