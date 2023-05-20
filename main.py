@@ -7,6 +7,8 @@ import logging
 from gameplay.dice import DiceGame
 from resources.Localization import Localization
 from aiogram.dispatcher.filters.state import State, StatesGroup
+import asyncio
+
 
 
 from db.game_db import SQLiteDB
@@ -62,10 +64,12 @@ async def handle_button(callback_query: types.CallbackQuery, state: FSMContext):
     rolls.append(dice_roll_value)
     result = f"Roll {len(rolls)}: {dice_roll_value}\n"
     if len(rolls) == num_rolls:
+        await asyncio.sleep(3)
         result += "Total result: " + str(sum(rolls))
         await bot.send_message(chat_id=callback_query.message.chat.id, text=result)
         await state.finish()
     else:
+        await asyncio.sleep(3)
         await bot.send_message(chat_id=callback_query.message.chat.id, text=result, reply_markup=GameState()) 
         await state.update_data(rolls=rolls)
 
