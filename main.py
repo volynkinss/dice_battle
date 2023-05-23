@@ -45,29 +45,39 @@ async def cmd_start(message: types.Message):
 async def cmd_play(message: types.Message, state: FSMContext):
     session_id = db.create_session()
     db.create_game(message.from_user.id, session_id)
+    chat_id = message.chat.id
+    data = await state.get_data()
+    print("players" not in data)
+    if "players" not in data:
+        await state.update_data(players = [])
+    data = await state.get_data()
+    players = data["players"]
+    players.append(chat_id)
+    await state.update_data(players = players)
+    print(data)
     await message.reply(Localization.number_players)
-    await GameStates.num_players.set()
+    await GameStates.num_rolls.set()
 
 # Get number of players handler
-@dp.message_handler(state=GameStates.num_players)
-async def handle_num_players(message: types.Message, state: FSMContext):
-    try:
-        message.text.isdigit()
-        num_players = int(message.text)
-        if num_players >= 1:
-            await state.update_data(num_players=num_players)
-            data = await state.get_data()
-            for i in range(num_players):
-                player_name = f"player {i+1}"
-                data[player_name] = []
-                await state.update_data(data = data)
-            await message.reply(Localization.number_rolls)
-            await GameStates.num_rolls.set()
-        else:
-            await bot.send_message(chat_id=message.chat.id, text=Localization.number_players)    
-    except:
-        await bot.send_message(chat_id=message.chat.id, text=Localization.number_players)
-
+# @dp.message_handler(state=GameStates.num_players)
+# async def handle_num_players(message: types.Message, state: FSMContext):
+#     try:
+#         message.text.isdigit()
+#         num_players = int(message.text)
+#         if num_players >= 1:
+#             await state.update_data(num_players=num_players)
+#             data = await state.get_data()
+#             for i in range(num_players):
+#                 player_name = f"player {i+1}"
+#                 data[player_name] = []
+#                 await state.update_data(data = data)
+#             await message.reply(Localization.number_rolls)
+#             await GameStates.num_rolls.set()
+#         else:
+#             await bot.send_message(chat_id=message.chat.id, text=Localization.number_players)    
+#     except:
+#         await bot.send_message(chat_id=message.chat.id, text=Localization.number_players)
+num_players = 2
 
 # Get number of rolls handler
 @dp.message_handler(state=GameStates.num_rolls)
@@ -90,16 +100,13 @@ async def handle_button(callback_query: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     print(data)
     num_rolls = data["num_rolls"]
-    num_gamers = data["num_players"]
+    players = data["num_players"]
     print((num_rolls))
-    print((num_gamers))
-    for i in range(num_gamers):
-        print(i)
-        await state.update_data(i = [])
-        num_player = i
-        rolls = data[num_player]
+    print(players)
+    for i in range(num_rolls):
+        rolls = data
         rolls.append(dice_roll_value)
-        result = f"Roll of player {num_player}: {dice_roll_value}\n"
+        result = f"Roll of player {rolls}: {dice_roll_value}\n"
     if len(rolls) == num_rolls:
         await asyncio.sleep(3)
         total_results = []
