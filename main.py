@@ -33,13 +33,20 @@ class GameStates(StatesGroup):
     rolls = State()
     winner = State()
 
+players = []
 
 # Start command handler
 @dp.message_handler(Command("start"))
-async def cmd_start(message: types.Message):
-    db.create_player(message.from_user.id, message.from_user.full_name)
+async def cmd_start(message: types.Message, state: FSMContext):
     await message.reply(Localization.welcome)
-    
+    data = await state.get_data()
+    user_id = message.from_user.id
+    if user_id not in players:
+        players.append(user_id)
+        await state.update_data(players = players)
+
+
+
 # Play command handler
 @dp.message_handler(Command("play"))
 async def cmd_play(message: types.Message, state: FSMContext):
