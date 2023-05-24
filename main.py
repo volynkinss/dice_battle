@@ -109,30 +109,22 @@ async def handle_button(callback_query: types.CallbackQuery, state: FSMContext):
     num_rolls = data["num_rolls"]
     user_id = callback_query.from_user.id
     print(user_id)
-    players = data["num_players"]
     print((num_rolls))
-    print(players)
-    for i in range(num_rolls):
-        rolls = data
-        rolls.append(dice_roll_value)
-        result = f"Roll of player {rolls}: {dice_roll_value}\n"
+    rolls = data["rolls"][user_id]
+    print(rolls)
+    rolls.append(dice_roll_value)
+    print(rolls)
+    await state.update_data(data)
+    print(data)
+    await asyncio.sleep(3)
+    result = f"Roll number {len(rolls)} of player {user_id}: {dice_roll_value}\n"
     if len(rolls) == num_rolls:
-        await asyncio.sleep(3)
-        total_results = []
-        for i in range(data["num_players"]):
-            player_result = []
-            for j in range(num_rolls):
-                player_result.append(rolls[i*num_rolls+j])
-            total_results.append(sum(player_result))
-            result += f"Player {i+1}: {player_result}\n"
-        winner_index = total_results.index(max(total_results))
-        result += f"Winner: Player {winner_index+1}\nTotal result: {total_results}"
         await bot.send_message(chat_id=callback_query.message.chat.id, text=result)
-        await state.finish()
-    else:
         await asyncio.sleep(3)
-        await bot.send_message(chat_id=callback_query.message.chat.id, text=result, reply_markup=GameState()) 
-        await state.update_data(rolls=rolls)
+        result = f"Total of {num_rolls} rolls = {sum(rolls)}"
+        await bot.send_message(chat_id=callback_query.message.chat.id, text=result) 
+    else:
+        await bot.send_message(chat_id=callback_query.message.chat.id, text=result, reply_markup=GameState())
 
 
     # TODO: Implement game logic (e.g., track scores, determine the winner, etc.)
