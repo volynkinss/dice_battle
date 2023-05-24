@@ -85,6 +85,11 @@ async def handle_message(message: types.Message, state: FSMContext):
 async def cmd_play(message: types.Message, state: FSMContext):
     data = await state.get_data()
     num_rolls = data["num_rolls"]
+    num_players = data["num_players"]
+    players = data["players"]
+    while len(players) != num_players:
+        await message.reply(Localization.waiting)
+        await asyncio.sleep(20)
     await message.reply(Localization.lets_play.format(num_rolls), reply_markup=GameState())
     await GameStates.rolls.set()
 
