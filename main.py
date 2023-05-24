@@ -46,7 +46,10 @@ async def cmd_start(message: types.Message, state: FSMContext):
         players.append(user_id)
         await state.update_data(players = players)
         rolls = {user_id : []}
-        await state.update_data(rolls = rolls)
+        total = {user_id : []}
+        await state.update_data(rolls = rolls, 
+                                total = total)
+
     if num_players == 0:
         await message.reply(Localization.number_players)
         await GameStates.num_players.set()
@@ -104,27 +107,28 @@ async def cmd_play(message: types.Message, state: FSMContext):
 async def handle_button(callback_query: types.CallbackQuery, state: FSMContext):
     dice_roll = await bot.send_dice(chat_id=callback_query.message.chat.id)
     dice_roll_value = dice_roll["dice"]["value"]
+    player_name = dice_roll["chat"]["first_name"]
     data = await state.get_data()
-    print(data)
     num_rolls = data["num_rolls"]
     user_id = callback_query.from_user.id
-    print(user_id)
-    print((num_rolls))
     rolls = data["rolls"][user_id]
-    print(rolls)
     rolls.append(dice_roll_value)
-    print(rolls)
     await state.update_data(data)
-    print(data)
     await asyncio.sleep(3)
-    result = f"Roll number {len(rolls)} of player {user_id}: {dice_roll_value}\n"
+    result = f"Roll №{len(rolls)} by {player_name}: {dice_roll_value}\n"
     if len(rolls) == num_rolls:
         await bot.send_message(chat_id=callback_query.message.chat.id, text=result)
         await asyncio.sleep(3)
-        result = f"Total of {num_rolls} rolls = {sum(rolls)}"
+        total = data["total"][user_id]
+        total_result = sum(rolls)
+        result = f"Total of {num_rolls} rolls by {player_name} is {total_result}"
+        total.append(total_result)
         await bot.send_message(chat_id=callback_query.message.chat.id, text=result) 
+        await state.update_data(data)
+        print(data)
     else:
         await bot.send_message(chat_id=callback_query.message.chat.id, text=result, reply_markup=GameState())
+        
 
 
     # TODO: Implement game logic (e.g., track scores, determine the winner, etc.)
