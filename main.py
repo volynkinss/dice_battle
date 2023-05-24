@@ -31,10 +31,11 @@ class GameStates(StatesGroup):
     num_players = State()
     num_rolls = State()
     rolls = State()
+    play = State()
     winner = State()
 
 players = []
-num_players = []
+num_players = 0
 
 # Start command handler
 @dp.message_handler(Command("start"))
@@ -44,7 +45,7 @@ async def cmd_start(message: types.Message, state: FSMContext):
     if user_id not in players:
         players.append(user_id)
         await state.update_data(players = players)
-    if num_players == []:
+    if num_players == 0:
         await message.reply(Localization.number_players)
         await GameStates.num_players.set()
     else:
@@ -58,7 +59,7 @@ async def handle_num_players(message: types.Message, state: FSMContext):
         message.text.isdigit()
         num_players_value = int(message.text)
         if num_players_value >= 1:
-            num_players.append(num_players_value)
+            num_players = num_players_value
             await state.update_data(num_players=num_players)
             await message.reply(Localization.number_rolls)
             await GameStates.num_rolls.set()
@@ -74,28 +75,18 @@ async def handle_message(message: types.Message, state: FSMContext):
     if message.text.isdigit():
         num_rolls = int(message.text)
         await state.update_data(num_rolls = num_rolls)
-        await message.reply(Localization.lets_play, reply_markup=GameState())
-        await GameStates.rolls.set()
+        await message.reply(Localization.play_after_set)
+        await GameStates.play.set()
     else:
         await bot.send_message(chat_id=message.chat.id, text = Localization.number_rolls)
 
 # Play command handler
-@dp.message_handler(Command("play"))
+@dp.message_handler(Command("play"), state=GameStates.play)
 async def cmd_play(message: types.Message, state: FSMContext):
-    session_id = db.create_session()
-    db.create_game(message.from_user.id, session_id)
-    chat_id = message.chat.id
     data = await state.get_data()
-    print("players" not in data)
-    if "players" not in data:
-        await state.update_data(players = [])
-    data = await state.get_data()
-    players = data["players"]
-    players.append(chat_id)
-    await state.update_data(players = players)
-    print(data)
-    await message.reply(Localization.number_players)
-    await GameStates.num_rolls.set()
+    num_rolls = data["num_rolls"]
+    await message.reply(Localization.lets_play.format(num_rolls), reply_markup=GameState())
+    await GameStates.rolls.set()
 
 
 
