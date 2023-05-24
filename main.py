@@ -34,61 +34,45 @@ class GameStates(StatesGroup):
     play = State()
     winner = State()
 
+
 players = []
-num_players = 0
+num_players = 2
+num_rolls = 3
+rolls = {}
+total = {}
 
 # Start command handler
 @dp.message_handler(Command("start"))
 async def cmd_start(message: types.Message, state: FSMContext):
-    data = await state.get_data()
     user_id = message.from_user.id
+    await state.update_data(rolls = rolls,
+                            num_players = num_players,
+                            num_rolls = num_rolls)
+    data = await state.get_data()
+    print(data)
     if user_id not in players:
         players.append(user_id)
-        await state.update_data(players = players)
-        rolls = {user_id : []}
-        total = {user_id : []}
-        await state.update_data(rolls = rolls, 
+        rolls.update({user_id : []})
+        total.update({user_id : []})
+        await state.update_data(players = players,
+                                rolls = rolls,
                                 total = total)
 
-    if num_players == 0:
-        await message.reply(Localization.number_players)
-        await GameStates.num_players.set()
-    else:
-        await message.reply(Localization.welcome)
-
-    
-# Get number of players handler
-@dp.message_handler(state=GameStates.num_players)
-async def handle_num_players(message: types.Message, state: FSMContext):
-    try:
-        message.text.isdigit()
-        num_players_value = int(message.text)
-        if num_players_value >= 1:
-            num_players = num_players_value
-            await state.update_data(num_players=num_players)
-            await message.reply(Localization.number_rolls)
-            await GameStates.num_rolls.set()
-        else:
-            await bot.send_message(chat_id=message.chat.id, text=Localization.number_players)    
-    except:
-        await bot.send_message(chat_id=message.chat.id, text=Localization.number_players)
-
-
-# Get number of rolls handler
-@dp.message_handler(state=GameStates.num_rolls)
-async def handle_message(message: types.Message, state: FSMContext):
-    if message.text.isdigit():
-        num_rolls = int(message.text)
-        await state.update_data(num_rolls = num_rolls)
-        await message.reply(Localization.play_after_set)
+    if len(players) == num_players:
         await GameStates.play.set()
+        await message.reply(Localization.welcome)
     else:
-        await bot.send_message(chat_id=message.chat.id, text = Localization.number_rolls)
+        text = "Search for the enemy"
+        await message.reply(text = text)
+    data = await state.get_data()
+    print(data)
+
 
 # Play command handler
 @dp.message_handler(Command("play"), state=GameStates.play)
 async def cmd_play(message: types.Message, state: FSMContext):
     data = await state.get_data()
+    print(data)
     num_rolls = data["num_rolls"]
     num_players = data["num_players"]
     players = data["players"]
@@ -125,11 +109,16 @@ async def handle_button(callback_query: types.CallbackQuery, state: FSMContext):
         total.append(total_result)
         await bot.send_message(chat_id=callback_query.message.chat.id, text=result) 
         await state.update_data(data)
+        await GameStates.winner.set()
         print(data)
+
     else:
         await bot.send_message(chat_id=callback_query.message.chat.id, text=result, reply_markup=GameState())
         
-
+@dp.message_handler(state=GameStates.winner)
+async def handle_winner(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    print(data)
 
     # TODO: Implement game logic (e.g., track scores, determine the winner, etc.)
     
