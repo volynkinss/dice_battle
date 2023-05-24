@@ -45,6 +45,8 @@ async def cmd_start(message: types.Message, state: FSMContext):
     if user_id not in players:
         players.append(user_id)
         await state.update_data(players = players)
+        rolls = {user_id : []}
+        await state.update_data(rolls = rolls)
     if num_players == 0:
         await message.reply(Localization.number_players)
         await GameStates.num_players.set()
@@ -105,6 +107,8 @@ async def handle_button(callback_query: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     print(data)
     num_rolls = data["num_rolls"]
+    user_id = callback_query.from_user.id
+    print(user_id)
     players = data["num_players"]
     print((num_rolls))
     print(players)
