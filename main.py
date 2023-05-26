@@ -52,8 +52,8 @@ async def cmd_start(message: types.Message, state: FSMContext):
     print(data)
     if user_id not in players:
         players.append(user_id)
-        rolls.update({user_id : []})
         total.update({user_id : []})
+        rolls.update({user_id : []})
         await state.update_data(players = players,
                                 rolls = rolls,
                                 total = total)
@@ -95,30 +95,47 @@ async def handle_button(callback_query: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     num_rolls = data["num_rolls"]
     user_id = callback_query.from_user.id
-    rolls = data["rolls"][user_id]
-    rolls.append(dice_roll_value)
-    await state.update_data(data)
-    await asyncio.sleep(3)
+    rolls = data["rolls"]
+    rolls[user_id].append(dice_roll_value)
+    print(rolls)
+    print(data)
+    await state.update_data({"rolls": rolls})
+    data = await state.get_data()
+    print(data)
+    # await asyncio.sleep(3)
     result = f"Roll №{len(rolls)} by {player_name}: {dice_roll_value}\n"
-    if len(rolls) == num_rolls:
+    if len(rolls[user_id]) == num_rolls:
         await bot.send_message(chat_id=callback_query.message.chat.id, text=result)
-        await asyncio.sleep(3)
-        total = data["total"][user_id]
+        # await asyncio.sleep(3)
+        data = await state.get_data()
+        total = data["total"]
+        print(total)
         total_result = sum(rolls)
         result = f"Total of {num_rolls} rolls by {player_name} is {total_result}"
-        total.append(total_result)
+        total[user_id].append(total_result)
+        await state.update_data({"total":total})
         await bot.send_message(chat_id=callback_query.message.chat.id, text=result) 
-        await state.update_data(data)
-        await GameStates.winner.set()
+        data = await state.get_data()
+        total = data["total"]
         print(data)
+        print(total)
+        # users_id = list(total.keys())
+        # user1 = users_id[0]
+        # total_u_1 = int(total[user1][0])
+        # user2 = users_id[1]
+        # total_u_2 = int(total[user2][0])
+        # if total_u_1 == total_u_2:
+        #     text = "ничья"
+        # elif total_u_1 > total_u_2:
+        #     text = f"Player {user1} win"
+        # else:
+        #     text = f"Player {user2} win"
+        # await bot.send_message(chat_id=callback_query.message.chat.id, text=text)
 
     else:
         await bot.send_message(chat_id=callback_query.message.chat.id, text=result, reply_markup=GameState())
-        
-@dp.message_handler(state=GameStates.winner)
-async def handle_winner(message: types.Message, state: FSMContext):
-    data = await state.get_data()
-    print(data)
+
+    
 
     # TODO: Implement game logic (e.g., track scores, determine the winner, etc.)
     
