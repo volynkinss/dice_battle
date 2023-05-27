@@ -4,10 +4,8 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Command
 from aiogram.utils import executor
 import logging
-from gameplay.dice import DiceGame
 from resources.Localization import Localization
 from aiogram.dispatcher.filters.state import State, StatesGroup
-import asyncio
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 
