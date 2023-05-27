@@ -46,15 +46,19 @@ name = {}
 async def cmd_start(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     user_name = message.from_user.first_name
-    if user_id not in players:
-        players.append(user_id)
-        rolls.update({user_id : []})
-        name.update({user_id : user_name})
-    markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton('Start Game', callback_data='play'))
-    await message.reply(Localization.lets_play.format(num_rolls), reply_markup=markup)
-    await GameStates.play.set()
-
+    if len(players) >= num_players:
+        text = "Sorry, all playing places are taken. Try again later"
+        await message.reply(text)
+    else:
+        if user_id not in players:
+            players.append(user_id)
+            rolls.update({user_id : []})
+            total.update({user_id : []})
+            name.update({user_id : user_name})
+        markup = InlineKeyboardMarkup()
+        markup.add(InlineKeyboardButton('Start Game', callback_data='play'))
+        await message.reply(Localization.lets_play.format(num_rolls), reply_markup=markup)
+        await GameStates.play.set()
 
 
 # Play command handler
@@ -65,10 +69,7 @@ async def play_button(callback_query: types.CallbackQuery, state: FSMContext):
         await bot.send_message(chat_id=callback_query.message.chat.id, text=Localization.waiting)
     else:
         await bot.send_message(chat_id=callback_query.message.chat.id, text=Localization.lets_play.format(num_rolls), reply_markup=GameState())
-        rolls[user_id].clear()
-        total[user_id].clear()
         await GameStates.rolls.set()
-        
 
 
 
@@ -90,16 +91,15 @@ async def roll_dice_button(callback_query: types.CallbackQuery, state: FSMContex
         markup.add(InlineKeyboardButton('Show winner', callback_data='winner'))
         await bot.send_message(chat_id=callback_query.message.chat.id, text=result, reply_markup=markup)
         await GameStates.winner.set()
-        print(total)
     else:
         await bot.send_message(chat_id=callback_query.message.chat.id, text=result, reply_markup=GameState())
 
 @dp.callback_query_handler(lambda c: c.data == 'winner', state=GameStates.winner)
 async def winner_button(callback_query: types.CallbackQuery, state: FSMContext):
-    if len(total.values()) == num_players:
-        list_val = list(total.values())
-        if list_val[0] == list_val[1]:
-            winner = f" After all rolls players have the same result : {list_val[0]}. Good game!🤝 \nIf you want to play again, click /start"
+    if all(total.values()):
+        list_total_values = list(total.values())
+        if list_total_values[0] == list_total_values[1]:
+            winner = f" After all rolls players have the same result : {list_total_values[0]}. Good game!🤝 \nIf you want to play again, click /start"
         else:
             max_player_id = max(total, key=total.get)
             max_player_name = name[max_player_id]
