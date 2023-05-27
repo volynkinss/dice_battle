@@ -8,6 +8,7 @@ from gameplay.dice import DiceGame
 from resources.Localization import Localization
 from aiogram.dispatcher.filters.state import State, StatesGroup
 import asyncio
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 
 
@@ -28,113 +29,90 @@ db.connect()
 db.init_game_table()
 
 class GameStates(StatesGroup):
-    num_players = State()
-    num_rolls = State()
-    rolls = State()
     play = State()
+    rolls = State()
     winner = State()
 
 
-players = []
 num_players = 2
 num_rolls = 3
+players = []
 rolls = {}
 total = {}
+name = {}
 
 # Start command handler
 @dp.message_handler(Command("start"))
 async def cmd_start(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
-    await state.update_data(rolls = rolls,
-                            num_players = num_players,
-                            num_rolls = num_rolls)
-    data = await state.get_data()
-    print(data)
+    user_name = message.from_user.first_name
     if user_id not in players:
         players.append(user_id)
-        total.update({user_id : []})
         rolls.update({user_id : []})
-        await state.update_data(players = players,
-                                rolls = rolls,
-                                total = total)
+        name.update({user_id : user_name})
+    markup = InlineKeyboardMarkup()
+    markup.add(InlineKeyboardButton('Start Game', callback_data='play'))
+    await message.reply(Localization.lets_play.format(num_rolls), reply_markup=markup)
+    await GameStates.play.set()
 
-    if len(players) == num_players:
-        await GameStates.play.set()
-        await message.reply(Localization.welcome)
-    else:
-        text = "Search for the enemy"
-        await message.reply(text = text)
-    data = await state.get_data()
-    print(data)
 
 
 # Play command handler
-@dp.message_handler(Command("play"), state=GameStates.play)
-async def cmd_play(message: types.Message, state: FSMContext):
-    data = await state.get_data()
-    print(data)
-    num_rolls = data["num_rolls"]
-    num_players = data["num_players"]
-    players = data["players"]
-    while len(players) != num_players:
-        await message.reply(Localization.waiting)
-        await asyncio.sleep(20)
-    await message.reply(Localization.lets_play.format(num_rolls), reply_markup=GameState())
-    await GameStates.rolls.set()
-
+@dp.callback_query_handler(lambda c: c.data == 'play', state=GameStates.play)
+async def play_button(callback_query: types.CallbackQuery, state: FSMContext):
+    user_id = callback_query.from_user.id
+    if len(players) != num_players:
+        await bot.send_message(chat_id=callback_query.message.chat.id, text=Localization.waiting)
+    else:
+        await bot.send_message(chat_id=callback_query.message.chat.id, text=Localization.lets_play.format(num_rolls), reply_markup=GameState())
+        rolls[user_id].clear()
+        total[user_id].clear()
+        await GameStates.rolls.set()
+        
 
 
 
 
 #Roll dice handler
 @dp.callback_query_handler(lambda c: c.data == GameState.ROLL_DICE, state=GameStates.rolls)
-async def handle_button(callback_query: types.CallbackQuery, state: FSMContext):
+async def roll_dice_button(callback_query: types.CallbackQuery, state: FSMContext):
     dice_roll = await bot.send_dice(chat_id=callback_query.message.chat.id)
     dice_roll_value = dice_roll["dice"]["value"]
-    player_name = dice_roll["chat"]["first_name"]
-    data = await state.get_data()
-    num_rolls = data["num_rolls"]
     user_id = callback_query.from_user.id
-    rolls = data["rolls"]
     rolls[user_id].append(dice_roll_value)
-    print(rolls)
-    print(data)
-    await state.update_data({"rolls": rolls})
-    data = await state.get_data()
-    print(data)
-    # await asyncio.sleep(3)
-    result = f"Roll №{len(rolls)} by {player_name}: {dice_roll_value}\n"
+    result = f"Roll №{len(rolls[user_id])} by {name[user_id]}: {dice_roll_value}\n"
     if len(rolls[user_id]) == num_rolls:
         await bot.send_message(chat_id=callback_query.message.chat.id, text=result)
-        # await asyncio.sleep(3)
-        data = await state.get_data()
-        total = data["total"]
+        total_result = sum(rolls[user_id])
+        result = f"Total of {num_rolls} rolls by {name[user_id]} is {total_result}"
+        total.update({user_id:total_result})
+        markup = InlineKeyboardMarkup()
+        markup.add(InlineKeyboardButton('Show winner', callback_data='winner'))
+        await bot.send_message(chat_id=callback_query.message.chat.id, text=result, reply_markup=markup)
+        await GameStates.winner.set()
         print(total)
-        total_result = sum(rolls)
-        result = f"Total of {num_rolls} rolls by {player_name} is {total_result}"
-        total[user_id].append(total_result)
-        await state.update_data({"total":total})
-        await bot.send_message(chat_id=callback_query.message.chat.id, text=result) 
-        data = await state.get_data()
-        total = data["total"]
-        print(data)
-        print(total)
-        # users_id = list(total.keys())
-        # user1 = users_id[0]
-        # total_u_1 = int(total[user1][0])
-        # user2 = users_id[1]
-        # total_u_2 = int(total[user2][0])
-        # if total_u_1 == total_u_2:
-        #     text = "ничья"
-        # elif total_u_1 > total_u_2:
-        #     text = f"Player {user1} win"
-        # else:
-        #     text = f"Player {user2} win"
-        # await bot.send_message(chat_id=callback_query.message.chat.id, text=text)
-
     else:
         await bot.send_message(chat_id=callback_query.message.chat.id, text=result, reply_markup=GameState())
 
+@dp.callback_query_handler(lambda c: c.data == 'winner', state=GameStates.winner)
+async def winner_button(callback_query: types.CallbackQuery, state: FSMContext):
+    if len(total.values()) == num_players:
+        list_val = list(total.values())
+        if list_val[0] == list_val[1]:
+            winner = f" After all rolls players have the same result : {list_val[0]}. Good game!🤝 \nIf you want to play again, click /start"
+        else:
+            max_player_id = max(total, key=total.get)
+            max_player_name = name[max_player_id]
+            max_player_score = total[max_player_id]
+            winner = f" After all rolls of players winner is {max_player_name} with total {max_player_score}. Congratulations! \nIf you want to play again, click /start"
+        await bot.send_message(chat_id=callback_query.message.chat.id, text=winner)
+        await state.reset_state()
+        players.clear()
+    else:
+        markup = InlineKeyboardMarkup()
+        markup.add(InlineKeyboardButton('Show winner', callback_data='winner'))
+        text = "Waiting for the opponent to finish his throws"
+        await bot.send_message(chat_id=callback_query.message.chat.id, text=text, reply_markup=markup)
     
 
     # TODO: Implement game logic (e.g., track scores, determine the winner, etc.)
