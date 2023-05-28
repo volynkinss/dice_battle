@@ -3,7 +3,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Command
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from gameplay.game_state import GameState
-from helpers.helpers import add_new_player, send_roll_result, send_start_game_message, update_total_and_send_result, send_again_game_message
+from helpers.helpers import *
 from resources.localization import Localization
 from resources.commands import *
 from gameplay.states import GameStates
@@ -66,15 +66,14 @@ async def play_button(callback_query: types.CallbackQuery, state: FSMContext):
 
 async def roll_dice_button(callback_query: types.CallbackQuery, state: FSMContext):
     user_id = callback_query.from_user.id
-
-    if len(rolls[user_id]) == NUM_ROLLS:
-        await update_total_and_send_result(callback_query, user_id)
-        await winner_update(callback_query.message.chat.id, state)
-    else:
+    if len(rolls[user_id]) < NUM_ROLLS:
         dice_roll = await bot.send_dice(chat_id=callback_query.message.chat.id)
         dice_roll_value = dice_roll["dice"]["value"]
         rolls[user_id].append(dice_roll_value)
         await send_roll_result(callback_query, user_id, dice_roll_value)
+    if len(rolls[user_id]) == NUM_ROLLS:
+        await update_total_and_send_result(callback_query, user_id)
+        await winner_update(callback_query.message.chat.id, state)        
 
 
 async def winner_update(chat_id, state: FSMContext):
