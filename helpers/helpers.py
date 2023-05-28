@@ -1,7 +1,7 @@
 from aiogram import types
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from config import NUM_ROLLS
-from resources.localization import Localization
+from resources.Localization import Localization
 from bot_setup import bot
 from gameplay.game_state import GameState, players, rolls, total, name
 from resources.commands import *
