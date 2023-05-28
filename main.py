@@ -103,7 +103,7 @@ async def roll_dice_button(callback_query: types.CallbackQuery, state: FSMContex
         await update_total_and_send_result(callback_query, user_id)
         await GameStates.winner.set()
     else:
-        await bot.send_message(chat_id=callback_query.message.chat.id, text=result, reply_markup=GameState())
+        await bot.send_message(chat_id=callback_query.message.chat.id, reply_markup=GameState())
 
 
 @dp.callback_query_handler(lambda c: c.data == Commands.winner, state=GameStates.winner)
