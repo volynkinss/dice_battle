@@ -94,15 +94,16 @@ async def roll_dice_button(callback_query: types.CallbackQuery, state: FSMContex
 async def winner_button(callback_query: types.CallbackQuery, state: FSMContext):
     if all(total.values()): #check that total values of both players not empty
         list_total_values = list(total.values())
-        if list_total_values[0] == list_total_values[1]: #check the equality of player results 
-            winner = f" After all rolls players have the same result : {list_total_values[0]}. Good game!🤝 \nIf you want to play again, click /start"
-        else:
-            max_player_id = max(total, key=total.get) #determine player with max result
-            max_player_name = name[max_player_id]
-            max_player_score = total[max_player_id]
-            winner = f" After all rolls winner is {max_player_name} with total result {max_player_score} points. Congratulations! \nIf you want to play again, click /start"
-        await bot.send_message(chat_id=callback_query.message.chat.id, text=winner)
-        await state.reset_state()
+        for player in players:
+            if list_total_values[0] == list_total_values[1]: #check the equality of player results 
+                winner = f" After all rolls players have the same result : {list_total_values[0]}. Good game!🤝 \nIf you want to play again, click /start"
+            else:
+                max_player_id = max(total, key=total.get) #determine player with max result
+                max_player_name = name[max_player_id]
+                max_player_score = total[max_player_id]
+                winner = f" After all rolls winner is {max_player_name} with total result {max_player_score} points. Congratulations! \nIf you want to play again, click /start"
+            await bot.send_message(player, text=winner)
+            await state.reset_state()
         players.clear()
     else:
         markup = InlineKeyboardMarkup()
