@@ -1,4 +1,3 @@
-class Commands:
-    start = "start"
-    play = "play"
-    winner = "winner"
+start = 'start'
+play = 'play'
+again = 'again'

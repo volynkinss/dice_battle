@@ -3,6 +3,13 @@ from aiogram import types
 
 # Game states
 
+
+players = []
+rolls = {}
+total = {}
+name = {}
+
+
 class GameState(types.InlineKeyboardMarkup):
     ROLL_DICE = 'roll_dice'
 
