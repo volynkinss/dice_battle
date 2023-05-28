@@ -6,3 +6,11 @@ class Localization:
     lets_play = "Let's play a game of dice! Press the 'Roll the Dice' button to roll the dice. You have {} tries. At the end of the game, you will see the total of your rolls. After all players have rolled the dice, each player's score and the winner will be displayed."
     rolled = "You rolled {}!"
     waiting = "Waiting for players to connect.."
+    waiting_opponent = "Waiting for the opponent to finish his throws"
+    sorry = 'Sorry, all playing places are taken. Try again later'
+    start_game = 'Start Game'
+    dice_result = "Roll №{} by {}: {}}\n"
+    total_result = "Total of {} rolls by {} is {}"
+    show_winner = 'Show winner'
+    draw_message = "After all rolls players have the same result : {}. Good game!🤝 \nIf you want to play again, click /start"
+    winner_message = "After all rolls winner is {} with total result {} points. Congratulations! \nIf you want to play again, click /start"
