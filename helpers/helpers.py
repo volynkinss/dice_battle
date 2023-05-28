@@ -6,6 +6,7 @@ from bot_setup import bot
 from gameplay.game_state import GameState, players, rolls, total, name
 from resources.commands import *
 
+
 async def add_new_player(user_id: int, user_name: str):
     players.append(user_id)
     rolls.update({user_id: []})
@@ -13,24 +14,24 @@ async def add_new_player(user_id: int, user_name: str):
     name.update({user_id: user_name})
 
 
-async def send_start_game_message(message: types.Message):
-    markup = InlineKeyboardMarkup(inline_keyboard=[
+def create_start_markup():
+    return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(Localization.start_game,
                                  callback_data=play)
         ]
     ])
+
+
+async def send_start_game_message(message: types.Message):
+    markup = create_start_markup()
     await message.reply(Localization.lets_play.format(NUM_ROLLS), reply_markup=markup)
 
 
 async def send_again_game_message(callback_query: types.CallbackQuery):
-    markup = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(Localization.start_game,
-                                 callback_data=play)
-        ]
-    ])
+    markup = create_start_markup()
     await bot.send_message(chat_id=callback_query.message.chat.id, text=Localization.lets_play.format(NUM_ROLLS), reply_markup=markup)
+
 
 async def send_roll_result(callback_query: types.CallbackQuery, user_id: int, dice_roll_value: int):
     result = Localization.dice_result.format(
