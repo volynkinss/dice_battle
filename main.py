@@ -38,6 +38,20 @@ total = {}
 name = {}
 
 
+async def add_new_player(user_id: int, user_name: str):
+    players.append(user_id)
+    rolls.update({user_id: []})
+    total.update({user_id: []})
+    name.update({user_id: user_name})
+
+
+async def send_start_game_message(message: types.Message):
+    markup = InlineKeyboardMarkup()
+    markup.add(InlineKeyboardButton(
+        Localization.start_game, callback_data=Commands.play))
+    await message.reply(Localization.lets_play.format(NUM_ROLLS), reply_markup=markup)
+
+
 @dp.message_handler(Command(Commands.start))
 async def cmd_start(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
@@ -47,13 +61,8 @@ async def cmd_start(message: types.Message, state: FSMContext):
         await message.reply(text)
     else:
         if user_id not in players:
-            players.append(user_id)
-            rolls.update({user_id: []})
-            total.update({user_id: []})
-            name.update({user_id: user_name})
-        markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton(Localization.start_game, callback_data=Commands.play))
-        await message.reply(Localization.lets_play.format(NUM_ROLLS), reply_markup=markup)
+            await add_new_player(user_id, user_name)
+        await send_start_game_message(message)
         await GameStates.play.set()
 
 
@@ -66,21 +75,32 @@ async def play_button(callback_query: types.CallbackQuery, state: FSMContext):
         await GameStates.rolls.set()
 
 
+async def send_roll_result(callback_query: types.CallbackQuery, user_id: int, dice_roll_value: int):
+    result = Localization.dice_result.format(
+        len(rolls[user_id]), name[user_id], dice_roll_value)
+    await bot.send_message(chat_id=callback_query.message.chat.id, text=result)
+
+
+async def update_total_and_send_result(callback_query: types.CallbackQuery, user_id: int):
+    total_result = sum(rolls[user_id])
+    result = Localization.total_result.format(
+        NUM_ROLLS, name[user_id], total_result)
+    total.update({user_id: total_result})
+    markup = InlineKeyboardMarkup()
+    markup.add(InlineKeyboardButton(
+        Localization.show_winner, callback_data=Commands.winner))
+    await bot.send_message(chat_id=callback_query.message.chat.id, text=result, reply_markup=markup)
+
+
 @dp.callback_query_handler(lambda c: c.data == GameState.ROLL_DICE, state=GameStates.rolls)
 async def roll_dice_button(callback_query: types.CallbackQuery, state: FSMContext):
     dice_roll = await bot.send_dice(chat_id=callback_query.message.chat.id)
     dice_roll_value = dice_roll["dice"]["value"]
     user_id = callback_query.from_user.id
     rolls[user_id].append(dice_roll_value)
-    result = Localization.dice_result.format(len(rolls[user_id]), name[user_id], dice_roll_value)
+    await send_roll_result(callback_query, user_id, dice_roll_value)
     if len(rolls[user_id]) == NUM_ROLLS:
-        await bot.send_message(chat_id=callback_query.message.chat.id, text=result)
-        total_result = sum(rolls[user_id])
-        result = Localization.total_result.format(NUM_ROLLS, name[user_id], total_result)
-        total.update({user_id: total_result})
-        markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton(Localization.show_winner, callback_data=Commands.winner))
-        await bot.send_message(chat_id=callback_query.message.chat.id, text=result, reply_markup=markup)
+        await update_total_and_send_result(callback_query, user_id)
         await GameStates.winner.set()
     else:
         await bot.send_message(chat_id=callback_query.message.chat.id, text=result, reply_markup=GameState())
