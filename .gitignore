@@ -2,4 +2,4 @@
 token_for_bot.py
 game.db
 .DS_Store
-/__pycache__
+**/__pycache__/
