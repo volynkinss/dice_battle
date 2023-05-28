@@ -5,6 +5,7 @@ from aiogram.dispatcher.filters import Command
 from aiogram.utils import executor
 import logging
 from resources.localization import Localization
+from resources.commands import Commands
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
@@ -37,7 +38,7 @@ total = {}
 name = {}
 
 
-@dp.message_handler(Command("start"))
+@dp.message_handler(Command(Commands.start))
 async def cmd_start(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     user_name = message.from_user.first_name
@@ -51,12 +52,12 @@ async def cmd_start(message: types.Message, state: FSMContext):
             total.update({user_id: []})
             name.update({user_id: user_name})
         markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton(Localization.start_game, callback_data='play'))
+        markup.add(InlineKeyboardButton(Localization.start_game, callback_data=Commands.play))
         await message.reply(Localization.lets_play.format(NUM_ROLLS), reply_markup=markup)
         await GameStates.play.set()
 
 
-@dp.callback_query_handler(lambda c: c.data == 'play', state=GameStates.play)
+@dp.callback_query_handler(lambda c: c.data == Commands.play, state=GameStates.play)
 async def play_button(callback_query: types.CallbackQuery, state: FSMContext):
     if len(players) != NUM_PLAYERS:
         await bot.send_message(chat_id=callback_query.message.chat.id, text=Localization.waiting)
@@ -78,14 +79,14 @@ async def roll_dice_button(callback_query: types.CallbackQuery, state: FSMContex
         result = Localization.total_result.format(NUM_ROLLS, name[user_id], total_result)
         total.update({user_id: total_result})
         markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton(Localization.show_winner, callback_data='winner'))
+        markup.add(InlineKeyboardButton(Localization.show_winner, callback_data=Commands.winner))
         await bot.send_message(chat_id=callback_query.message.chat.id, text=result, reply_markup=markup)
         await GameStates.winner.set()
     else:
         await bot.send_message(chat_id=callback_query.message.chat.id, text=result, reply_markup=GameState())
 
 
-@dp.callback_query_handler(lambda c: c.data == 'winner', state=GameStates.winner)
+@dp.callback_query_handler(lambda c: c.data == Commands.winner, state=GameStates.winner)
 async def winner_button(callback_query: types.CallbackQuery, state: FSMContext):
     if all(total.values()):
         list_total_values = list(total.values())
@@ -102,7 +103,8 @@ async def winner_button(callback_query: types.CallbackQuery, state: FSMContext):
         players.clear()
     else:
         markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton(Localization.show_winner, callback_data='winner'))
+        markup.add(InlineKeyboardButton(
+            Localization.show_winner, callback_data=Commands.winner))
         text = Localization.waiting_opponent
         await bot.send_message(chat_id=callback_query.message.chat.id, text=text, reply_markup=markup)
 
