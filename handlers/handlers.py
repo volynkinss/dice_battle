@@ -4,7 +4,7 @@ from aiogram.dispatcher.filters import Command
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from gameplay.game_state import GameState
 from helpers.helpers import *
-from resources.Localization import Localization
+from resources.localization import Localization
 from resources.commands import *
 from gameplay.states import GameStates
 from config import NUM_PLAYERS, NUM_ROLLS
