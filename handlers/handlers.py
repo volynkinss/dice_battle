@@ -58,16 +58,19 @@ async def again_button(callback_query: types.CallbackQuery):
 
 async def play_button(callback_query: types.CallbackQuery):
     chat_id = callback_query.message.chat.id
-    message = None
-    mark_up = None
+    if len(players) > NUM_PLAYERS:
+        raise(Exception('fatal num players in session'))
     if len(players) != NUM_PLAYERS:
-        message = Localization.waiting
+        await bot.send_message(chat_id=chat_id, text=Localization.waiting)
     else:
-        message = Localization.lets_play.format(NUM_ROLLS)
-        mark_up = GameState()
         await GameStates.rolls.set()
+        for player_id in players:
+            if player_id == chat_id:
+                continue
+            await bot.send_message(chat_id=player_id, text=Localization.found_opponent)
+        await bot.send_message(chat_id=chat_id, text=Localization.lets_play.format(NUM_ROLLS), reply_markup=GameState())
+
     
-    await bot.send_message(chat_id=chat_id, text=message, reply_markup=mark_up)
 
 async def roll_dice_button(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
