@@ -14,3 +14,5 @@ class Localization:
     draw_message = "After all rolls players have the same result : {}. Good game!🤝"
     winner_message = "After all rolls winner is {} with total result {} points. Congratulations!"
     play_again = "Play again"
+    roll = 'Roll dice'
+    found_opponent = 'Opponent joined the game. Press start game button'

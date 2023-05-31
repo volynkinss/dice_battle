@@ -1,8 +1,6 @@
 from aiogram import types
-from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Command
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from gameplay.game_state import GameState
+from gameplay.game_state import GameState, PlayAgainState
 from helpers.helpers import *
 from resources.localization import Localization
 from resources.commands import *
@@ -25,61 +23,72 @@ def is_play(callback_query: types.CallbackQuery):
 
 
 def is_roll_dice(callback_query: types.CallbackQuery):
-    return callback_query.data == GameState.ROLL_DICE
+    return callback_query.data == roll_dice
 
 
 def is_again(callback_query: types.CallbackQuery):
     return callback_query.data == again
 
 
-async def check_and_add_player(message, user_id, user_name):
+async def check_and_add_player(chat_id, user_id, user_name):
     if len(players) >= NUM_PLAYERS:
-        text = Localization.sorry
-        await message.reply(text)
+        await bot.send_message(chat_id=chat_id, text=Localization.sorry)
     else:
         if user_id not in players:
             await add_new_player(user_id, user_name)
 
 
-async def cmd_start(message: types.Message, state: FSMContext):
+async def cmd_start(message: types.Message):
     user_id = message.from_user.id
-    user_name = message.from_user.first_name
-    await check_and_add_player(message, user_id, user_name)
-    await send_start_game_message(message)
+    user_name = message.from_user.username
+    chat_id = message.chat.id
+    await check_and_add_player(chat_id, user_id, user_name)
+    await send_start_game_message(chat_id)
     await GameStates.play.set()
 
 
-async def again_button(callback_query: types.CallbackQuery, state: FSMContext):
+async def again_button(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
-    user_name = callback_query.from_user.first_name
-    await check_and_add_player(callback_query, user_id, user_name)
-    await send_again_game_message(callback_query)
+    user_name = callback_query.from_user.username
+    chat_id = callback_query.message.chat.id
+    await check_and_add_player(chat_id, user_id, user_name)
+    await send_start_game_message(chat_id)
     await GameStates.play.set()
 
 
-async def play_button(callback_query: types.CallbackQuery, state: FSMContext):
+async def play_button(callback_query: types.CallbackQuery):
+    chat_id = callback_query.message.chat.id
+    if len(players) > NUM_PLAYERS:
+        raise(Exception('fatal num players in session'))
     if len(players) != NUM_PLAYERS:
-        await bot.send_message(chat_id=callback_query.message.chat.id, text=Localization.waiting)
+        await bot.send_message(chat_id=chat_id, text=Localization.waiting)
     else:
-        await bot.send_message(chat_id=callback_query.message.chat.id, text=Localization.lets_play.format(NUM_ROLLS), reply_markup=GameState())
         await GameStates.rolls.set()
+        for player_id in players:
+            if player_id == chat_id:
+                continue
+            await bot.send_message(chat_id=player_id, text=Localization.found_opponent)
+        await bot.send_message(chat_id=chat_id, text=Localization.lets_play.format(NUM_ROLLS), reply_markup=GameState())
 
-async def roll_dice_button(callback_query: types.CallbackQuery, state: FSMContext):
+    
+
+async def roll_dice_button(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
+    chat_id = callback_query.message.chat.id
     if len(rolls[user_id]) < NUM_ROLLS:
-        dice_roll = await bot.send_dice(chat_id=callback_query.message.chat.id)
+        dice_roll = await bot.send_dice(chat_id=chat_id)
         dice_roll_value = dice_roll["dice"]["value"]
         rolls[user_id].append(dice_roll_value)
-        await send_roll_result(callback_query, user_id, dice_roll_value)
+        await send_roll_result(chat_id, user_id, dice_roll_value)
     if len(rolls[user_id]) == NUM_ROLLS:
-        await update_total_and_send_result(callback_query, user_id)
-        await winner_update(callback_query.message.chat.id, state)        
+        await update_total_and_send_result(chat_id, user_id)
+        await winner_update(chat_id)
 
 
-async def winner_update(chat_id, state: FSMContext):
+async def winner_update(chat_id):
     if all(total.values()):
         list_total_values = list(total.values())
-        for player in players:
+        for player_id in players:
             if list_total_values[0] == list_total_values[1]:
                 winner_session = Localization.draw_message.format(
                     list_total_values[0])
@@ -90,10 +99,7 @@ async def winner_update(chat_id, state: FSMContext):
                 winner_session = Localization.winner_message.format(
                     max_player_name, max_player_score)
                 
-            markup = InlineKeyboardMarkup()
-            markup.add(InlineKeyboardButton(Localization.play_again, callback_data=again))
-            await bot.send_message(player, text=winner_session, reply_markup=markup)
+            await bot.send_message(player_id, text=winner_session, reply_markup=PlayAgainState())
         players.clear()
     else:
-        text = Localization.waiting_opponent
-        await bot.send_message(chat_id=chat_id, text=text)
+        await bot.send_message(chat_id=chat_id, text=Localization.waiting_opponent)
