@@ -2,12 +2,13 @@ import requests
 import json
 
 user_address = "EQDuVM_M2Cqx0bco0cYlNeW_aa2mvtvLy-UuPJQkzZEVmrmN"
-base_url = "https://tonapi.io/v2/nfts"
 
 
 class NFTWorker:
-    def get_data(user_address):
-        url = f"{base_url}/collections/{user_address}/items?limit=1000&offset=0"
+    base_url = "https://tonapi.io/v2/nfts"
+
+    def get_data(self, user_address):
+        url = f"{self.base_url}/collections/{user_address}/items?limit=1000&offset=0"
         owner_address = (
             "0:89f356bd10b3c8609187c5abcd7bb1d5840c7f8a88e73debff8e64ffd8f12010"
         )
