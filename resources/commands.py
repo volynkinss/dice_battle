@@ -1,4 +1,5 @@
-start = 'start'
-play = 'play'
-again = 'again'
-roll_dice = 'roll_dice'
+start = "start"
+play = "play"
+again = "again"
+roll_dice = "roll_dice"
+nft = "nft"

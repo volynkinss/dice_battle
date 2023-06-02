@@ -8,13 +8,15 @@ from gameplay.states import GameStates
 from config import NUM_PLAYERS, NUM_ROLLS
 from bot_setup import bot
 from gameplay.game_state import players, rolls, total, name
+from NFT.NftWorker import NFTWorker
 
 
 def setup_handlers(dp):
+    dp.message_handler(Command(nft))(cmd_show_nft)
+    dp.message_handler(state=GameStates.get_adress)(show_nft_data)
     dp.message_handler(Command(start))(cmd_start)
     dp.callback_query_handler(is_play, state=GameStates.play)(play_button)
-    dp.callback_query_handler(
-        is_roll_dice, state=GameStates.rolls)(roll_dice_button)
+    dp.callback_query_handler(is_roll_dice, state=GameStates.rolls)(roll_dice_button)
     dp.callback_query_handler(is_again, state=GameStates.rolls)(again_button)
 
 
@@ -59,7 +61,7 @@ async def again_button(callback_query: types.CallbackQuery):
 async def play_button(callback_query: types.CallbackQuery):
     chat_id = callback_query.message.chat.id
     if len(players) > NUM_PLAYERS:
-        raise(Exception('fatal num players in session'))
+        raise (Exception("fatal num players in session"))
     if len(players) != NUM_PLAYERS:
         await bot.send_message(chat_id=chat_id, text=Localization.waiting)
     else:
@@ -68,9 +70,12 @@ async def play_button(callback_query: types.CallbackQuery):
             if player_id == chat_id:
                 continue
             await bot.send_message(chat_id=player_id, text=Localization.found_opponent)
-        await bot.send_message(chat_id=chat_id, text=Localization.lets_play.format(NUM_ROLLS), reply_markup=GameState())
+        await bot.send_message(
+            chat_id=chat_id,
+            text=Localization.lets_play.format(NUM_ROLLS),
+            reply_markup=GameState(),
+        )
 
-    
 
 async def roll_dice_button(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
@@ -90,16 +95,33 @@ async def winner_update(chat_id):
         list_total_values = list(total.values())
         for player_id in players:
             if list_total_values[0] == list_total_values[1]:
-                winner_session = Localization.draw_message.format(
-                    list_total_values[0])
+                winner_session = Localization.draw_message.format(list_total_values[0])
             else:
                 max_player_id = max(total, key=total.get)
                 max_player_name = name[max_player_id]
                 max_player_score = total[max_player_id]
                 winner_session = Localization.winner_message.format(
-                    max_player_name, max_player_score)
-                
-            await bot.send_message(player_id, text=winner_session, reply_markup=PlayAgainState())
+                    max_player_name, max_player_score
+                )
+
+            await bot.send_message(
+                player_id, text=winner_session, reply_markup=PlayAgainState()
+            )
         players.clear()
     else:
         await bot.send_message(chat_id=chat_id, text=Localization.waiting_opponent)
+
+
+async def cmd_show_nft(message: types.Message):
+    chat_id = message.chat.id
+    await send_player_address_request(chat_id)
+    await GameStates.get_adress.set()
+
+
+async def show_nft_data(message: types.Message):
+    chat_id = message.chat.id
+    adress = message.text
+    data = NFTWorker()
+    name, description, url = data.get_data(adress)
+    await bot.send_message(chat_id, text=name)
+    await bot.send_photo(chat_id, photo=url)
