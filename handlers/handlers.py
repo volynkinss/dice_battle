@@ -9,6 +9,7 @@ from config import NUM_PLAYERS, NUM_ROLLS
 from bot_setup import bot
 from gameplay.game_state import players, rolls, total, name
 from NFT.NftWorker import NFTWorker
+from resources.players import Player
 
 
 def setup_handlers(dp):
@@ -120,8 +121,10 @@ async def cmd_show_nft(message: types.Message):
 
 async def show_nft_data(message: types.Message):
     chat_id = message.chat.id
-    adress = message.text
-    data = NFTWorker()
-    name, description, url = data.get_data(adress)
-    await bot.send_message(chat_id, text=name)
-    await bot.send_photo(chat_id, photo=url)
+    user_id = message.chat.id
+    address = message.text
+    collection = NFTWorker()
+    collection = collection.get_nfts(address)
+    player = Player(user_id, address, collection)
+    photo = player.collection[1][2]
+    await bot.send_photo(chat_id, photo=photo)
