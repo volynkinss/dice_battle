@@ -1,6 +1,10 @@
 from aiogram import types
 from aiogram.dispatcher.filters import Command
-from gameplay.game_state import GameState, PlayAgainState
+from gameplay.game_state import (
+    GameState,
+    PlayAgainState,
+    SelectNftState,
+)
 from helpers.helpers import *
 from resources.localization import Localization
 from resources.commands import *
@@ -10,6 +14,7 @@ from bot_setup import bot
 from gameplay.game_state import players, rolls, total, name
 from NFT.NftWorker import NFTWorker
 from resources.players import Player
+from aiogram.types import InlineKeyboardMarkup
 
 
 def setup_handlers(dp):
@@ -126,5 +131,7 @@ async def show_nft_data(message: types.Message):
     collection = NFTWorker()
     collection = collection.get_nfts(address)
     player = Player(user_id, address, collection)
-    photo = player.collection[1][2]
-    await bot.send_photo(chat_id, photo=photo)
+    index_pic = 1
+    photo = player.collection[index_pic][2]
+    await bot.send_photo(chat_id, photo=photo, reply_markup=SelectNftState())
+    await GameStates.select_pic.set()
