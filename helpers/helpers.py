@@ -4,6 +4,7 @@ from bot_setup import bot
 from gameplay.game_state import (
     GameState,
     StartGameState,
+    SelectNftState,
     players,
     rolls,
     total,
@@ -47,3 +48,12 @@ async def update_total_and_send_result(chat_id, user_id: int):
 
 async def send_player_address_request(chat_id):
     await bot.send_message(chat_id=chat_id, text=Localization.address_request)
+
+
+async def send_photo_nft(chat_id, photo):
+    await bot.send_photo(chat_id=chat_id, photo=photo, reply_markup=SelectNftState())
+
+
+async def send_selected_nft(chat_id, name):
+    selected = Localization.selected_pic.format(name)
+    await bot.send_message(chat_id=chat_id, text=selected)

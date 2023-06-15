@@ -14,15 +14,15 @@ from bot_setup import bot
 from gameplay.game_state import players, rolls, total, name, pic_index, nft_players
 from NFT.NftWorker import NFTWorker
 from resources.players import Player
+from aiogram.dispatcher import FSMContext
 
 
 def setup_handlers(dp):
     dp.message_handler(Command(nft))(cmd_show_nft)
     dp.message_handler(state=GameStates.get_adress)(show_nft_data)
     dp.callback_query_handler(is_next, state=GameStates.select_pic)(next_picture)
-    dp.callback_query_handler(is_previous, state=GameStates.select_pic)(
-        previous_picture
-    )
+    dp.callback_query_handler(is_previous, state=GameStates.select_pic)(prev_picture)
+    dp.callback_query_handler(is_selected, state=GameStates.select_pic)(select_picture)
     dp.message_handler(Command(start))(cmd_start)
     dp.callback_query_handler(is_play, state=GameStates.play)(play_button)
     dp.callback_query_handler(is_roll_dice, state=GameStates.rolls)(roll_dice_button)
@@ -47,6 +47,10 @@ def is_next(callback_query: types.CallbackQuery):
 
 def is_previous(callback_query: types.CallbackQuery):
     return callback_query.data == previous
+
+
+def is_selected(callback_query: types.CallbackQuery):
+    return callback_query.data == select
 
 
 async def check_and_add_player(chat_id, user_id, user_name):
@@ -145,7 +149,7 @@ async def show_nft_data(message: types.Message):
     nft_players.update({player.user_id: (player.address, player.collection)})
     pic_index.update({user_id: 1})
     photo = player.collection[pic_index[user_id]][2]
-    await bot.send_photo(chat_id, photo=photo, reply_markup=SelectNftState())
+    await send_photo_nft(chat_id, photo)
     await GameStates.select_pic.set()
 
 
@@ -158,10 +162,11 @@ async def next_picture(callback_query: types.CallbackQuery):
     if index > len(player_collection):
         pic_index.update({user_id: 1})
     photo = player_collection[pic_index[user_id]][2]
-    await bot.send_photo(chat_id, photo=photo, reply_markup=SelectNftState())
+    await send_photo_nft(chat_id, photo)
+    await bot.delete_message(chat_id, callback_query.message.message_id)
 
 
-async def previous_picture(callback_query: types.CallbackQuery):
+async def prev_picture(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
     chat_id = callback_query.message.chat.id
     player_collection = nft_players[user_id][1]
@@ -170,4 +175,17 @@ async def previous_picture(callback_query: types.CallbackQuery):
     if index == 0:
         pic_index.update({user_id: len(player_collection)})
     photo = player_collection[pic_index[user_id]][2]
-    await bot.send_photo(chat_id, photo=photo, reply_markup=SelectNftState())
+    await send_photo_nft(chat_id, photo)
+    await bot.delete_message(chat_id, callback_query.message.message_id)
+
+
+async def select_picture(callback_query: types.CallbackQuery, state: FSMContext):
+    user_id = callback_query.from_user.id
+    chat_id = callback_query.message.chat.id
+    player_collection = nft_players[user_id][1]
+    photo = player_collection[pic_index[user_id]][2]
+    name = player_collection[pic_index[user_id]][0]
+    await bot.send_photo(chat_id, photo=photo)
+    await bot.delete_message(chat_id, callback_query.message.message_id)
+    await send_selected_nft(chat_id, name)
+    await state.finish()

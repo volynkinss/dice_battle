@@ -20,5 +20,6 @@ class Localization:
     found_opponent = "Opponent joined the game. Press start game button"
     address_request = "Please enter your address to show NFT pic"
     select = "✅"
-    next = "🔜"
-    previous = "🔙"
+    next = "➡️"
+    previous = "⬅️"
+    selected_pic = "Your selected picture is {}"
