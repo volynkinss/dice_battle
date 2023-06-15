@@ -1,7 +1,16 @@
 from config import NUM_ROLLS
 from resources.localization import Localization
 from bot_setup import bot
-from gameplay.game_state import GameState, StartGameState, players, rolls, total, name
+from gameplay.game_state import (
+    GameState,
+    StartGameState,
+    players,
+    rolls,
+    total,
+    name,
+    pic_index,
+    nft_players,
+)
 from resources.commands import *
 
 
@@ -10,6 +19,8 @@ async def add_new_player(user_id: int, user_name: str):
     rolls.update({user_id: []})
     total.update({user_id: []})
     name.update({user_id: user_name})
+    pic_index.update({user_id: 0})
+    nft_players.update({user_id: ()})
 
 
 async def send_start_game_message(chat_id):

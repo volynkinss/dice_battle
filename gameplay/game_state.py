@@ -10,6 +10,8 @@ players = []
 rolls = {}
 total = {}
 name = {}
+pic_index = {}
+nft_players = {}
 
 
 class GameState(types.InlineKeyboardMarkup):

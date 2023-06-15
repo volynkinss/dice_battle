@@ -17,7 +17,7 @@ db.init_game_table()
 
 setup_handlers(dp)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         executor.start_polling(dp)
     finally:
